@@ -2,13 +2,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 
-from dichasusAoAFunction import * 
+from utils.dichasusAoAFunctions import * 
 
 class AOA_CNN(object):
-    def __init__(self, input_dim = (32,32,2), num_activation_layers=3,
-                 activation_function="relu"):
-        
-        
+    def __init__(self, input_dim = (32,32,2), num_activation_layers=3, activation_function="relu"):
         nn_input = tf.keras.Input(shape=input_dim, name = "input")
         nn_output = tf.keras.layers.Flatten()(nn_input)
         for i in range(num_activation_layers):
@@ -16,14 +13,14 @@ class AOA_CNN(object):
         nn_output = tf.keras.layers.Dense(units = 1, activation = "linear", name = "output")(nn_output)
         model = tf.keras.Model(inputs = nn_input, outputs = nn_output, name = "AoA_NN")
         model.compile(optimizer = tf.keras.optimizers.Adam(), loss = "mse")
+        self.model = model
     
-    def train(self, training_set, test_set, batch_size):
-        
+    def train(self, training_set, test_set, batch_size, epochs = 10):
         model = self.model
         trianing_set_batched = training_set.batch(batch_size)
         test_set_batched = test_set.batch(batch_size)
         print("\nBatch Size:", batch_size)
-        model.fit(trianing_set_batched.map(only_input_output), epochs = 10, validation_data = test_set_batched.map(only_input_output)) 
+        model.fit(trianing_set_batched.map(only_input_output), epochs = epochs, validation_data = test_set_batched.map(only_input_output)) 
         
         self.model = model
     
