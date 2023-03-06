@@ -35,7 +35,7 @@ class AOA_CNN(object):
         
         model = self.model
 
-        for csi, pos, angle, dist in test_set.batch(batch_size):
+        for csi, pos, angle, dist, complex in test_set.batch(batch_size):
             positions.append(pos.numpy())
             predicted_angles.append(np.transpose(model.predict(csi))[0])
             true_angles.append(angle.numpy())

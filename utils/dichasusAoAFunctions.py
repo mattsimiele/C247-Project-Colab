@@ -13,23 +13,27 @@ def record_parse_function(proto):
 	dist = tf.sqrt(tf.square(pos_tachy[0]) + tf.square(pos_tachy[1]))
 	angle = tf.math.atan2(pos_tachy[1], -pos_tachy[0])
 
-	return csi, pos_tachy[:2], angle, dist
+	csi_complex = tf.ensure_shape(tf.io.parse_tensor(record["csi"], out_type = tf.float32), (32, 1024, 2))
+	csi_complex = tf.signal.fftshift(csi_complex, axes = 1)
+	csi_complex = tf.complex(csi_complex[:,:,0], csi_complex[:,:,1])
+
+	return csi, pos_tachy[:2], angle, dist, csi_complex
 
 def get_feature_mapping(chunksize = 32):
-	def compute_features(csi, pos_tachy, angle, dist):
+	def compute_features(csi, pos_tachy, angle, dist, csi_complex):
 		assert(csi.shape[1] % chunksize == 0)
 		featurecount = csi.shape[1] // chunksize
 		csi_averaged = tf.stack([tf.math.reduce_mean(csi[:, (chunksize * s):(chunksize * (s + 1)), :], axis = 1) for s in range(featurecount)], axis = 1)
-		return csi_averaged, pos_tachy, angle, dist
-
+		csi_complex_averaged = tf.stack([tf.math.reduce_mean(csi_complex[:, (chunksize * s):(chunksize * (s + 1))], axis = 1) for s in range(featurecount)], axis = 1)
+		return csi_averaged, pos_tachy, angle, dist, csi_complex_averaged
 	return compute_features
 
-def only_input_output(csi, pos, angle, dist):
+def only_input_output(csi, pos, angle, dist, csi_complex):
 	return csi, angle
 
 def plot_test_vs_train(training_set_features, test_set_features):
-    positions_train = np.vstack([pos for csi, pos, angle, dist in training_set_features])
-    positions_test = np.vstack([pos for csi, pos, angle, dist in test_set_features])
+    positions_train = np.vstack([pos for csi, pos, angle, dist, csi_complex in training_set_features])
+    positions_test = np.vstack([pos for csi, pos, angle, dist, csi_complex in test_set_features])
 
     plt.figure(figsize = (8, 8))
     plt.title("Training Set and Test Set", fontsize = 16, pad = 16)
