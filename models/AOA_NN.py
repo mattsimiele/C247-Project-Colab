@@ -1,33 +1,18 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
-from tensorflow.keras import datasets, layers, models
 
 from utils.dichasusAoAFunctions import * 
 
-class AOA_CNN(object):
-    def __init__(self, input_dim = (32,32,2), num_activation_layers=3, activation_function="relu", dropout_rate = 0.5, num_units_in_layer = 64, units_in_last_layer = 1, 
-                 activation_LL = "linear"):
-        
-        
-        model = models.Sequential()
-        model.add(layers.Conv2D(32, (3, 3), activation=activation_function, input_shape=input_dim))
-        model.add(layers.BatchNormalization(axis=1))
-        model.add(layers.Dropout(dropout_rate))
+class AOA_NN(object):
+    def __init__(self, input_dim = (32,32,2), num_activation_layers=3, activation_function="relu", num_units_in_layer = 64, units_in_last_layer = 1, activation_LL = "linear"):
+        nn_input = tf.keras.Input(shape=input_dim, name = "input")
+        nn_output = tf.keras.layers.Flatten()(nn_input)
         for i in range(num_activation_layers):
-            model.add(layers.Conv2D(num_units_in_layer, (3, 3), activation=activation_function, padding='same'))
-            model.add(layers.MaxPooling2D((2, 2), padding='same'))
-            model.add(layers.BatchNormalization(axis=1))
-            model.add(layers.Dropout(dropout_rate))
-        model.add(layers.Flatten())
-        model.add(layers.Dense(64, activation=activation_function))
-        model.add(layers.BatchNormalization(axis=1))
-        model.add(layers.Dense(32, activation=activation_function))
-        model.add(layers.BatchNormalization(axis=1))
-        model.add(layers.Dense(units_in_last_layer, activation = activation_LL, name = "output"))
+            nn_output = tf.keras.layers.Dense(units = num_units_in_layer, activation = activation_function)(nn_output)
+        nn_output = tf.keras.layers.Dense(units = units_in_last_layer, activation = activation_LL, name = "output")(nn_output)
+        model = tf.keras.Model(inputs = nn_input, outputs = nn_output, name = "AoA_NN")
         model.compile(optimizer = tf.keras.optimizers.Adam(), loss = "mse")
-            
-        model.summary()    
         self.model = model
     
     def train(self, training_set, test_set, batch_size, epochs_in = 10, use_cov=False):
@@ -42,7 +27,7 @@ class AOA_CNN(object):
         
         self.model = model
     
-    def test(self, test_set, batch_size = 100, use_cov = False): 
+    def test(self, test_set, batch_size = 100, use_cov=False): 
         
         outputs = {}
         

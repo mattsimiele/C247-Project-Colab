@@ -5,11 +5,9 @@ from tensorflow.keras import datasets, layers, models
 
 from utils.dichasusAoAFunctions import * 
 
-class AOA_CNN(object):
+class AOA_RNN(object):
     def __init__(self, input_dim = (32,32,2), num_activation_layers=3, activation_function="relu", dropout_rate = 0.5, num_units_in_layer = 64, units_in_last_layer = 1, 
-                 activation_LL = "linear"):
-        
-        
+                 activation_LL = "linear", RNN_Type = "LSTM"):
         model = models.Sequential()
         model.add(layers.Conv2D(32, (3, 3), activation=activation_function, input_shape=input_dim))
         model.add(layers.BatchNormalization(axis=1))
@@ -21,6 +19,13 @@ class AOA_CNN(object):
             model.add(layers.Dropout(dropout_rate))
         model.add(layers.Flatten())
         model.add(layers.Dense(64, activation=activation_function))
+        model.add(layers.Reshape((64,1)))
+        if RNN_Type == "LSTM":
+            model.add(layers.LSTM(8, dropout=0.5, recurrent_dropout=0.1, input_shape=(64,1), return_sequences=False))
+        else:
+            model.add(layers.GRU(16, dropout = 0.5, recurrent_dropout=0.1, input_shape=(64,1), return_sequences=False))
+            model.add(layers.Reshape((16,1))) # Reshape my output of FC layer so that it's compatible
+            model.add(layers.SimpleRNN(128))
         model.add(layers.BatchNormalization(axis=1))
         model.add(layers.Dense(32, activation=activation_function))
         model.add(layers.BatchNormalization(axis=1))
@@ -42,7 +47,7 @@ class AOA_CNN(object):
         
         self.model = model
     
-    def test(self, test_set, batch_size = 100, use_cov = False): 
+    def test(self, test_set, batch_size = 100, use_cov=False): 
         
         outputs = {}
         
