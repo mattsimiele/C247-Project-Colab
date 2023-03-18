@@ -1,5 +1,4 @@
-# Introduction {#sec:intro}
-
+# Introduction
 Antenna arrays have been widely used in many applications such as radar
 and wireless communication systems such as direction finders. One of the
 key functions in these design spaces is estimation the angle of arrival
@@ -33,8 +32,9 @@ algorithms used to estimate the AoA.
 
 ### Signal Model
 
-![Incident Signals arriving at a ULA](ula){#fig:ULA
-width=".9\\linewidth"}
+<p align="center">
+  <img src="figures/ula.png" height="300"/>
+</p>
 
 As described in more detail in the paper on Angle of Arrival Estimation
 in an Indoor Environment Using Machine Learning  [@9569205], the signal
