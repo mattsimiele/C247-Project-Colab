@@ -53,11 +53,12 @@ class Dichacus_Antenna_Cal(object):
         plt.colorbar(shrink = 0.7)
         plt.show()
     
-    def apply_calibration(self, csi, pos, angle, dist, csi_complex):
+    def apply_calibration(self, csi, pos, angle, dist, csi_complex, cov):
         sto_offset = tf.tensordot(tf.constant(self.offsets["sto"]), 2 * np.pi * tf.range(tf.shape(csi_complex)[1], dtype = np.float32) / tf.cast(tf.shape(csi_complex)[1], np.float32), axes = 0)
         cpo_offset = tf.tensordot(tf.constant(self.offsets["cpo"]), tf.ones(tf.shape(csi_complex)[1], dtype = np.float32), axes = 0)
         csi_complex = tf.multiply(csi_complex, tf.exp(tf.complex(0.0, sto_offset + cpo_offset)))
-        return csi, pos, angle, dist, csi_complex
+        cov = tf.divide(tf.matmul(csi_complex, tf.transpose(csi_complex, conjugate=True)), 1024)
+        return csi, pos, angle, dist, csi_complex, cov
 
     def estimate_frequency(self, samples):
         # Kay's Single Frequency Estimator:
@@ -71,7 +72,7 @@ class Dichacus_Antenna_Cal(object):
         positions = []
         angle_estimates = []
                 
-        for csi, pos, angle, dist, csi_complex in dataset:
+        for csi, pos, angle, dist, csi_complex, cov in dataset:
             subcarriers = csi_complex.shape[1]
             csi_complex_mean = tf.math.reduce_sum(csi_complex[:,subcarrier_start:subcarrier_start + subcarrier_count], axis = 1).numpy()
             wavelength = 299792458 / (fcarrier + bandwidth * (-subcarriers / 2 + subcarrier_start + subcarrier_count / 2) / subcarriers)
